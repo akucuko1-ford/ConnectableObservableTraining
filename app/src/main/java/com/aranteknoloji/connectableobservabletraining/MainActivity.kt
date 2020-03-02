@@ -30,6 +30,10 @@ class MainActivity : AppCompatActivity() {
                 .subscribe()
         }
 
+        btn_unsubscribe.setOnClickListener {
+            disposables.clear()
+        }
+
         //First Subscriber
         disposables.add(
             memoryObservable.observeOn(AndroidSchedulers.mainThread()).subscribe {
