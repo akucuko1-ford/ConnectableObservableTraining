@@ -3,9 +3,10 @@ package com.aranteknoloji.connectableobservabletraining
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import com.jakewharton.rx.replayingShare
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -19,16 +20,26 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val memoryObservable = getDbObservable().replay(1).refCount()
-            .doOnSubscribe { Log.i("MyTag", "memoryObservable SUBSCRIBE MEMORY") }
-            .doOnCancel { Log.i("MyTag", "memoryObservable UN-SUBSCRIBE MEMORY") }
-            .doOnEach { Log.i("MyTag", "memoryObservable EACH MEMORY => ${it.value}") }
+//        val memoryObservable = getDbObservable()
+//            .doOnSubscribe { Log.i("MyTag", "memoryObservable SUBSCRIBE MEMORY") }
+//            .doOnCancel { Log.i("MyTag", "memoryObservable UN-SUBSCRIBE MEMORY") }
+//            .doOnEach { Log.i("MyTag", "memoryObservable EACH MEMORY => ${it.value}") }
+//            .compose(ReplayingShare.instance())
+//
+//        btn_emitter.setOnClickListener {
+//            myDatabase(this).myDao().insertData(MyEntity(0, maps[counter++ % maps.size]))
+//                .subscribeOn(Schedulers.io())
+//                .subscribe()
+//        }
 
-        btn_emitter.setOnClickListener {
-            myDatabase(this).myDao().insertData(MyEntity(0, maps[counter++ % maps.size]))
-                .subscribeOn(Schedulers.io())
-                .subscribe()
+        val memoryObservable = Observable.create<MyEntity> { emitter ->
+            btn_emitter.setOnClickListener { emitter.onNext(MyEntity(0, maps[counter++ % maps.size])) }
         }
+            .doOnSubscribe { Log.i("MyTag", "memoryObservable SUBSCRIBE MEMORY") }
+            .doOnDispose { Log.i("MyTag", "memoryObservable UN-SUBSCRIBE MEMORY") }
+            .doOnEach { Log.i("MyTag", "memoryObservable EACH MEMORY => ${it.value}") }
+            .replayingShare()
+//            .replay(1).refCount()
 
         btn_unsubscribe.setOnClickListener {
             disposables.clear()
@@ -36,21 +47,27 @@ class MainActivity : AppCompatActivity() {
 
         //First Subscriber
         disposables.add(
-            memoryObservable.observeOn(AndroidSchedulers.mainThread()).subscribe {
+            memoryObservable.observeOn(AndroidSchedulers.mainThread())
+                .doOnEach { Log.i("MyTag", "subscriber1 EACH MEMORY => ${it.value}") }
+                .subscribe {
                 txt_sub1.text = it.data
             }
         )
 
         //Second Subscriber
         disposables.add(
-            memoryObservable.observeOn(AndroidSchedulers.mainThread()).subscribe {
+            memoryObservable.observeOn(AndroidSchedulers.mainThread())
+                .doOnEach { Log.i("MyTag", "subscriber2 EACH MEMORY => ${it.value}") }
+                .subscribe {
                 txt_sub2.text = it.data
             }
         )
 
         //Third Subscriber
         disposables.add(
-            memoryObservable.observeOn(AndroidSchedulers.mainThread()).subscribe {
+            memoryObservable.observeOn(AndroidSchedulers.mainThread())
+                .doOnEach { Log.i("MyTag", "subscriber3 EACH MEMORY => ${it.value}") }
+                .subscribe {
                 txt_sub3.text = it.data
             }
         )
@@ -60,7 +77,9 @@ class MainActivity : AppCompatActivity() {
         //Forth Subscriber
         btn_sub4.setOnClickListener {
             disposables.add(
-                memoryObservable.observeOn(AndroidSchedulers.mainThread()).subscribe {
+                memoryObservable.observeOn(AndroidSchedulers.mainThread())
+                    .doOnEach { Log.i("MyTag", "subscriber4 EACH MEMORY => ${it.value}") }
+                    .subscribe {
                     txt_sub4.text = it.data
                 }
             )
@@ -69,7 +88,9 @@ class MainActivity : AppCompatActivity() {
         //Fifth Subscriber
         btn_sub5.setOnClickListener {
             disposables.add(
-                memoryObservable.observeOn(AndroidSchedulers.mainThread()).subscribe {
+                memoryObservable.observeOn(AndroidSchedulers.mainThread())
+                    .doOnEach { Log.i("MyTag", "subscriber5 EACH MEMORY => ${it.value}") }
+                    .subscribe {
                     txt_sub5.text = it.data
                 }
             )
@@ -78,7 +99,9 @@ class MainActivity : AppCompatActivity() {
         //Sixth Subscriber
         btn_sub6.setOnClickListener {
             disposables.add(
-                memoryObservable.observeOn(AndroidSchedulers.mainThread()).subscribe {
+                memoryObservable.observeOn(AndroidSchedulers.mainThread())
+                    .doOnEach { Log.i("MyTag", "subscriber6 EACH MEMORY => ${it.value}") }
+                    .subscribe {
                     txt_sub6.text = it.data
                 }
             )
